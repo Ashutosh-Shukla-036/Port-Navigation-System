@@ -33,19 +33,19 @@ def calculateDistance(lat1, lon1, lat2, lon2, method='geodesic'):
 def constructGraph():
     graph = {
         "Malindi": ["WP1", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
-        "WP1": ["Lamu", "Kochi", "New Mangalore", "Mumbai", "WP10", "WP2", "Mormugaiort"],
+        "WP1": ["Lamu", "WP10", "WP2", "Mormugaiort"],  # Removed Mumbai, Kochi, New Mangalore, Mormugaiort connections
         "Lamu": ["WP2", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
-        "WP2": ["Kismayo", "Magadishu", "WP3", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
+        "WP2": ["Kismayo", "Magadishu", "WP3", "WP10", "Mormugaiort"],  # Removed Mumbai, Kochi, New Mangalore connections
         "Kismayo": ["Magadishu", "WP3", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
         "Magadishu": ["WP3", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
         "WP3": ["WP4", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
-        "WP4": ["WP5", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort"],
+        "WP4": ["WP5", "Kochi", "New Mangalore", "Mumbai", "WP10", "Mormugaiort", "WP6"],
         "Bosaso": ["Berbera", "Aden", "Mukalla", "Nishtun", "Salalah", "WP6"],
         "Berbera": ["WP6", "Aden", "Mukalla", "Nishtun"],
         "WP5": ["WP6", "Socotra", "Salalah", "Nishtun"],
         "Aden": ["Mukalla", "WP6"],
         "Nishtun": ["Socotra", "WP6", "WP10", "Mumbai", "Mormugaiort"],
-        "Salalah": ["WP6", "WP5", "WP7", "Kochi", "New Mangalore", "Mumbai", "Mormugaiort"],
+        "Salalah": ["WP6", "WP5", "WP7", "Kochi", "New Mangalore", "Mumbai", "Mormugaiort", "Socotra"],
         "WP7": ["WP5", "WP6", "WP8", "WP10", "Kochi", "New Mangalore", "Mumbai", "Mormugaiort", "Duqm"],
         "Duqm": ["WP8", "WP10", "Kochi", "New Mangalore", "Mumbai", "Mormugaiort"],
         "WP8": ["WP9", "WP10", "Sultan", "Kochi", "New Mangalore", "Mumbai", "Mormugaiort"],
@@ -54,11 +54,16 @@ def constructGraph():
         "WP10": ["WP11", "WP12"],
         "WP11": ["Kandla"],
         "WP12": ["Mumbai", "WP13", "WP14"],
-        "Mumbai": ["WP13", "Mormugaiort"],
+        "Mumbai": ["WP13", "Mormugaiort", "Chabahar", "Kochi", "New Mangalore"],
         "WP13": ["Mormugaiort", "WP14"],
-        "WP14": ["Mormugaiort", "Kochi"]
+        "WP14": ["Mormugaiort", "Kochi"],
+        "Chabahar": ["Mumbai", "Kochi", "New Mangalore", "Mormugaiort"],
+        "Mormugaiort": ["Mumbai", "Chabahar", "New Mangalore", "Kochi"],
+        "New Mangalore": ["Mumbai", "Mormugaiort", "Kochi", "Chabahar"],
+        "Kochi": ["Mumbai", "Mormugaiort", "New Mangalore", "Chabahar"]
     }
     return graph
+
 
 # Add the port and waypoint coordinates
 def getPortData():
@@ -196,11 +201,13 @@ def displayAllConnectionsOnOSM(graph):
 # Main function to run the program
 def main():
     portData = getPortData()
-    graph = constructPositionedGraphOptimized(portData)
-
-    # Input validation
-    start_port = input("Enter the starting port: ")
-    end_port = input("Enter the destination port: ")
+    
+    # Filter out waypoints (those that start with "WP") and only show actual ports
+    available_ports = [port for port in portData.keys() if not port.startswith("WP")]
+    print("Available ports:", ", ".join(available_ports))
+    
+    start_port = input("Enter the starting port: ").strip()
+    end_port = input("Enter the destination port: ").strip()
     
     if start_port not in portData or end_port not in portData:
         print("Invalid port entered. Please ensure both ports exist.")
@@ -211,13 +218,17 @@ def main():
         print("Invalid method. Defaulting to 'geodesic'.")
         method = 'geodesic'
     
+    # Construct the graph with the chosen distance calculation method
+    graph = constructPositionedGraphOptimized(portData, method)
+    
     # Calculate the shortest path using A*
     shortestPath = astarShortestPath(graph, start_port, end_port)
-    print("Shortest path:", shortestPath)
-    
     if shortestPath:
+        print("Shortest path:", shortestPath)
         # Display the shortest path on the map
         displayShortestPathOnOSM(graph, shortestPath)
+    else:
+        print(f"No valid path found between {start_port} and {end_port}.")
     
     # Display all valid connections on the map
     displayAllConnectionsOnOSM(graph)
