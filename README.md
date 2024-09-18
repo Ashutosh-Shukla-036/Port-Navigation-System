@@ -24,3 +24,22 @@ Ensure you have Python 3.x installed on your system. You will also need to insta
 ```bash
 pip install networkx geopy folium
 
+Usage
+Run the Script: Execute the script to calculate the shortest path and visualize it:
+
+bash
+Copy code
+python script.py
+Replace script.py with the actual name of your script file.
+
+View the Output:
+
+The shortest path between the specified start and end ports will be printed to the console.
+An HTML file named route_map.html will be generated, displaying the interactive map with ports, connections, and the shortest path.
+Example
+To find the shortest route between Port A and Port B, the tool will:
+
+Compute distances between ports.
+Build a graph based on port connections.
+Apply the A* algorithm to find the shortest path.
+Generate an interactive map highlighting the route.
